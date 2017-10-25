@@ -55,7 +55,7 @@ def getUrlText(url_lst):
 
 ###############################################################################
 
-def getFrequentWords(text_lst, exclude = [], skills =[], quart = 0.8):
+def getFrequentWords(text_lst, exclude = [], quart = 0.8):
     """
     text_lst - List of strings to be processed
     exclude - List of words to be pervented
@@ -75,6 +75,8 @@ def getFrequentWords(text_lst, exclude = [], skills =[], quart = 0.8):
         text = [t for t in text if t not in exclude]
         
         stop_words = set(stopwords.words("english"))
+        
+        #Getting word count
         wordsFiltered = {}
         for w in text:
             if w not in stop_words:
@@ -89,10 +91,11 @@ def getFrequentWords(text_lst, exclude = [], skills =[], quart = 0.8):
     
     assert len(df_con) == len(text_lst)
         
-    #Combine all the URLs' frequently used words above the gven quantile
+    #Combine all the URLs' frequently used words above the given quantile
     df_unfinal = pd.concat(df_con, axis =0)
     assert pd.notnull(df_unfinal).all().all()
     
+    #Combine all the common words
     if df_unfinal.word.value_counts()[0] != 1:
         print("*****There are common words****")
         df_unfinal['counts'] = df_unfinal.groupby('word')['counts'].transform('sum')
@@ -100,20 +103,17 @@ def getFrequentWords(text_lst, exclude = [], skills =[], quart = 0.8):
     
     assert df_unfinal.word.value_counts()[0] == 1
     
-    ret_skills = []
-    
-    for word in skills:
-        if word in df_unfinal.loc[:,'word'].values:
-            ret_skills.append(word)
-    
     quant= df_unfinal.quantile(quart)
+    print(quant)
     ret_df = df_unfinal[df_unfinal['counts']>quant.loc['counts']]
     
     assert ret_df.word.dtype == object
     assert ret_df.counts.dtype == 'int64'
     
-    return ret_df, ret_skills
+    return ret_df
 
 ###############################################################################
 
 url_lst =extractUrlMysql()
+txt_lst = getUrlText(url_lst)
+df = getFrequentWords(txt_lst)
