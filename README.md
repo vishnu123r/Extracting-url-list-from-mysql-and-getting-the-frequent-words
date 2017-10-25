@@ -1,1 +1,1 @@
-This scripte fetches url history from MYSQL database and anlyses the url using textblob
+This script fetches url history from MYSQL database and analyses the text using textblob
