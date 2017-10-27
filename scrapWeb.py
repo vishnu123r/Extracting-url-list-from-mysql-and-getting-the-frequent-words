@@ -17,7 +17,13 @@ def extractUrlMysql():
     cursor = conn.cursor()
     cursor.execute("SELECT urls FROM url_names")
     
+#    url_list = []
+    
     url_list = cursor.fetchall()
+#    for i in range(35):
+#        url = cursor.fetchone()
+#        url_list.append(url)
+    
     ret_lst = [i[0] for i in url_list]
     
     return ret_lst
@@ -35,11 +41,18 @@ def getUrlText(url_lst):
     
     for url in url_lst:
         
-        print(len(url_lst)-len(ret_text))
+        #print(len(url_lst)-len(ret_text))
+        #print(len(ret_text))
         
         #Get text from Url
-        r = requests.get(url)
-        html_code = r.text
+        try: 
+            r = requests.get(url)
+            html_code = r.text
+        
+        except:
+            print("URL not reached: " + url)
+            ret_text.append(" ")
+            continue 
         
         #Format the text for extraction
         soup = BeautifulSoup(html_code, "lxml")
@@ -55,7 +68,7 @@ def getUrlText(url_lst):
 
 ###############################################################################
 
-def getFrequentWords(text_lst, exclude = [], quart = 0.8):
+def getFrequentWords(text_lst, exclude = [], quart = 0.9):
     """
     text_lst - List of strings to be processed
     exclude - List of words to be pervented
@@ -104,7 +117,6 @@ def getFrequentWords(text_lst, exclude = [], quart = 0.8):
     assert df_unfinal.word.value_counts()[0] == 1
     
     quant= df_unfinal.quantile(quart)
-    print(quant)
     ret_df = df_unfinal[df_unfinal['counts']>quant.loc['counts']]
     
     assert ret_df.word.dtype == object
@@ -114,6 +126,15 @@ def getFrequentWords(text_lst, exclude = [], quart = 0.8):
 
 ###############################################################################
 
-url_lst =extractUrlMysql()
+def getSentiment(txt_lst):
+    con_str = "".join(txt_lst)
+    sent = TextBlob(con_str)
+    print("The Polarity is : " + str(sent.sentiment.polarity) +" and the subjectivity is "
+          + str(sent.sentiment.subjectivity))
+
+###############################################################################
+
+url_lst = extractUrlMysql()
 txt_lst = getUrlText(url_lst)
 df = getFrequentWords(txt_lst)
+getSentiment(txt_lst)
