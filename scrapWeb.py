@@ -7,22 +7,23 @@ from textblob import TextBlob
 import pandas as pd
 import mysql.connector
 
+import html
 ###############################################################################
 
 def extractUrlMysql():
     
-    """Extracts the url history from the mqsql database"""
+    """Extracts the url history from the mysql database"""
     
     conn = mysql.connector.connect(user = 'root',password='danekane',host='localhost',database = 'url_list')
     cursor = conn.cursor()
     cursor.execute("SELECT urls FROM url_names")
     
-#    url_list = []
-    
-    url_list = cursor.fetchall()
-#    for i in range(35):
-#        url = cursor.fetchone()
-#        url_list.append(url)
+#    url_list = cursor.fetchall()
+
+    url_list = []    
+    for i in range(100):
+        url = cursor.fetchone()
+        url_list.append(url)
     
     ret_lst = [i[0] for i in url_list]
     
@@ -35,6 +36,7 @@ def getUrlText(url_lst):
     url_lst - List of URLs to be processed
     Will return list of strings(text from the URLs)
     """
+    
     print("Retriving text")
     #Initialising array for return
     ret_text = []
@@ -82,10 +84,11 @@ def getFrequentWords(text_lst, exclude = [], quart = 0.9):
     
     #Extracting words and getting count of the words and adding to a dataframe
     for t in text_lst:
+        t = html.unescape(t)# get rid of the html tags
         text = TextBlob(t)
         text = text.words.singularize()
         text = [t.lower() for t in text if t.isalnum()]
-        text = [t for t in text if t not in exclude]
+        text = [t for t in text if t not in exclude]       
         
         stop_words = set(stopwords.words("english"))
         
@@ -133,8 +136,12 @@ def getSentiment(txt_lst):
           + str(sent.sentiment.subjectivity))
 
 ###############################################################################
+    
+
+    
+    
 
 url_lst = extractUrlMysql()
-txt_lst = getUrlText(url_lst)
-df = getFrequentWords(txt_lst)
-getSentiment(txt_lst)
+text_lst = getUrlText(url_lst)
+df = getFrequentWords(text_lst)
+getSentiment(text_lst)
