@@ -14,37 +14,46 @@ import mysql.connector
 from scrapWeb import extractUrlMysql, getUrlText
 
 ###############################################################################
-#r = requests.get("https://docs.python.org/2/library/re.html")
-#html_code = r.text
-#soup = BeautifulSoup(html_code, "lxml")
-#
-#for script in soup(["script", "style"]):
-#    script.extract()
-#
-#sample = soup.get_text()
+r = requests.get("https://docs.python.org/2/library/re.html")
+html_code = r.text
+soup = BeautifulSoup(html_code, "lxml")
+
+for script in soup(["script", "style"]):
+    script.extract()
+
+sample = soup.get_text()
+sample = html.unescape(sample) #html_tags =  re.findall(r'&[a-z]+',sample)
+
+#Converting the text to utf -8 
+if type(sample) != str:
+    sample = sample.decode("UTF-8").encode('ascii','ignore')
+
+
+sample1 = re.sub(r'[^a-zA-Z0-9 ]',r' ',sample)
+sample2 = re.sub(r'[0-9+]',r' ',sample1)
+
+text = TextBlob(sample2)
+
+#Extracting phrases
+text0 = text.noun_phrases
+tg = [t.lower() for t in text0]
 
 ###############################################################################
 
-url_lst = extractUrlMysql()
-txt_lst = getUrlText(url_lst)
-
-letter = []
-for t in txt_lst:
-    #getting rid of html tags
-    charNo1 = len(t)
-    sample = html.unescape(t) #html_tags =  re.findall(r'&[a-z]+',sample)
-    charNo2 = len(sample)
-    
-    charNo = charNo1 - charNo2
-    letter.append(charNo)
-    
-    
-    #Converting the text to utf -8 
+#url_lst = extractUrlMysql()
+#txt_lst = getUrlText(url_lst)
+#
+#letter = []
+#for t in txt_lst:
+#    #getting rid of html tags
+#    sample = html.unescape(t) #html_tags =  re.findall(r'&[a-z]+',sample)
+#
+#    #Converting the text to utf -8 
 #    if type(sample) != str:
 #        sample = sample.decode("UTF-8").encode('ascii','ignore')
-    
-    #text = TextBlob(sample1)
-    
-    #Extracting phrases
-    #text0 = text.noun_phrases
+#    
+#    text = TextBlob(sample)
+#    
+#    #Extracting phrases
+#    text0 = text.noun_phrases
 
