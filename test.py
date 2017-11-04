@@ -32,11 +32,19 @@ if type(sample) != str:
 sample1 = re.sub(r'[^a-zA-Z0-9 ]',r' ',sample)
 sample2 = re.sub(r'[0-9+]',r' ',sample1)
 
+
 text = TextBlob(sample2)
 
 #Extracting phrases
 text0 = text.noun_phrases
 tg = [t.lower() for t in text0]
+
+
+y = set(tg)
+
+for w in tg:
+    if w in y:
+        print("NOT FOUND : " +w)
 
 ###############################################################################
 

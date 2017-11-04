@@ -84,13 +84,17 @@ def getFrequentWords(text_lst, exclude = [], quart = 0.9):
     df_con = []
     
     #Extracting words and getting count of the words and adding to a dataframe
+    
+    del_words = ['thi', 'ymy']#list to be ommited from analysis
+    stop_words = set(stopwords.words("english"))
+    stop_words.update(del_words)
+    
     for t in text_lst:
         
         if type(t) != str:
          t = t.decode("UTF-8").encode('ascii','ignore')
          
         t = html.unescape(t)# get rid of the html tags
-        
         t = re.sub(r'[^a-zA-Z0-9 ]',r' ',t)
         t = re.sub(r'[0-9+]',r' ',t)
         
@@ -98,21 +102,19 @@ def getFrequentWords(text_lst, exclude = [], quart = 0.9):
         text = text.words.singularize()
         text = (t.lower() for t in text)
         text = (t for t in text if t not in exclude)
-        
-        stop_words = set(stopwords.words("english"))
+        text = [t for t in text if t not in stop_words]
         
         #Getting word count
         wordsFiltered = {}
-        
         for w in text:
             #gets rid of single alphabets
             if len(w) == 1:
                 continue
-            if w not in stop_words:
-                if w in wordsFiltered:
-                    wordsFiltered[w] = wordsFiltered[w] +1
-                else:
-                    wordsFiltered[w] = 1
+            if w in wordsFiltered:
+                wordsFiltered[w] = wordsFiltered[w] +1
+            else:
+                wordsFiltered[w] = 1
+                
             
         df = pd.DataFrame(list(wordsFiltered.items()), columns= ['word', 
                           'counts'])
