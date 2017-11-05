@@ -2,16 +2,16 @@ import requests
 from bs4 import BeautifulSoup
 
 import nltk
-from nltk.corpus import stopwords
+#from nltk.corpus import stopwords
 #from nltk.tokenize import word_tokenizer
 from textblob import TextBlob
 import html.parser 
 import re
 
-import pandas as pd
-import mysql.connector
-
-from scrapWeb import extractUrlMysql, getUrlText
+#import pandas as pd
+#import mysql.connector
+#
+#from scrapWeb import extractUrlMysql, getUrlText
 
 ###############################################################################
 r = requests.get("https://docs.python.org/2/library/re.html")
@@ -39,12 +39,17 @@ text = TextBlob(sample2)
 text0 = text.noun_phrases
 tg = [t.lower() for t in text0]
 
+freq_words = nltk.FreqDist(tg)
 
-y = set(tg)
 
-for w in tg:
-    if w in y:
-        print("NOT FOUND : " +w)
+print(freq_words.most_common(15)) 
+
+#
+#y = set(tg)
+#
+#for w in tg:
+#    if w in y:
+#        print("NOT FOUND : " +w)
 
 ###############################################################################
 
@@ -63,5 +68,10 @@ for w in tg:
 #    text = TextBlob(sample)
 #    
 #    #Extracting phrases
-#    text0 = text.noun_phrases
+#    text0 = text.
 
+###############################################################################
+#from nltk.corpus import wordnet
+#
+#syns = wordnet.synsets("mysql")
+#print(syns)

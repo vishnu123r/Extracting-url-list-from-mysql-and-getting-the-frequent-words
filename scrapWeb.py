@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
+import nltk
 from nltk.corpus import stopwords
 from textblob import TextBlob
 
@@ -43,10 +44,6 @@ def getUrlText(url_lst):
     ret_text = []
     
     for url in url_lst:
-        
-        #print(len(url_lst)-len(ret_text))
-        #print(len(ret_text))
-        
         #Get text from Url
         try: 
             r = requests.get(url)
@@ -76,71 +73,34 @@ def getFrequentWords(text_lst, exclude = [], quart = 0.9):
     text_lst - List of strings to be processed
     exclude - List of words to be pervented
     quart - Quartile for words
-    Will return list of strings(text from the URLs)
+    Will return a list of frequent words(tuples)
     """
     print("Obtaining list of frequent words")
     
-    #Intialising list for dataframes
-    df_con = []
-    
-    #Extracting words and getting count of the words and adding to a dataframe
+    #Concat all the texts
+    concat_text = " ".join(text_lst)
+
+    if type(concat_text) != str:
+     t = concat_text.decode("UTF-8").encode('ascii','ignore')
+     
+    t = html.unescape(concat_text)# get rid of the html tags
+    t = re.sub(r'[^a-zA-Z0-9 ]',r' ',t)
+    t = re.sub(r'[0-9+]',r' ',t)
     
     del_words = ['thi', 'ymy']#list to be ommited from analysis
     stop_words = set(stopwords.words("english"))
     stop_words.update(del_words)
     
-    for t in text_lst:
+    text = TextBlob(t)
+    text = text.words.singularize()
+    text = (t.lower() for t in text)
+    text = (t for t in text if t not in exclude)
+    text = [t.strip() for t in text if t not in stop_words and len(t) != 1]
         
-        if type(t) != str:
-         t = t.decode("UTF-8").encode('ascii','ignore')
-         
-        t = html.unescape(t)# get rid of the html tags
-        t = re.sub(r'[^a-zA-Z0-9 ]',r' ',t)
-        t = re.sub(r'[0-9+]',r' ',t)
-        
-        text = TextBlob(t)
-        text = text.words.singularize()
-        text = (t.lower() for t in text)
-        text = (t for t in text if t not in exclude)
-        text = [t for t in text if t not in stop_words]
-        
-        #Getting word count
-        wordsFiltered = {}
-        for w in text:
-            #gets rid of single alphabets
-            if len(w) == 1:
-                continue
-            if w in wordsFiltered:
-                wordsFiltered[w] = wordsFiltered[w] +1
-            else:
-                wordsFiltered[w] = 1
-                
-            
-        df = pd.DataFrame(list(wordsFiltered.items()), columns= ['word', 
-                          'counts'])
-        df_con.append(df)
-    
-    assert len(df_con) == len(text_lst)
-        
-    #Combine all the URLs' frequently used words above the given quantile
-    df_unfinal = pd.concat(df_con, axis =0)
-    assert pd.notnull(df_unfinal).all().all()
-    
-    #Combine all the common words
-    if df_unfinal.word.value_counts()[0] != 1:
-        print("*****There are common words****")
-        df_unfinal['counts'] = df_unfinal.groupby('word')['counts'].transform('sum')
-        df_unfinal = df_unfinal.drop_duplicates(subset = 'word')
-    
-    assert df_unfinal.word.value_counts()[0] == 1
-    
-    quant= df_unfinal.quantile(quart)
-    ret_df = df_unfinal[df_unfinal['counts']>quant.loc['counts']]
-    
-    assert ret_df.word.dtype == object
-    assert ret_df.counts.dtype == 'int64'
-    
-    return ret_df
+    word_freq = nltk.FreqDist(text)
+    freq_words = word_freq.most_common(500)
+
+    return freq_words
 
 ###############################################################################
 
@@ -154,5 +114,6 @@ def getSentiment(txt_lst):
 
 url_lst = extractUrlMysql()
 text_lst = getUrlText(url_lst)
-df = getFrequentWords(text_lst)
+freq_words = getFrequentWords(text_lst)
 getSentiment(text_lst)
+
