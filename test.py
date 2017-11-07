@@ -1,77 +1,49 @@
-import requests
-from bs4 import BeautifulSoup
-
 import nltk
-#from nltk.corpus import stopwords
+from nltk.corpus import stopwords
 #from nltk.tokenize import word_tokenizer
 from textblob import TextBlob
-import html.parser 
+import pickle
+
+import gensim
+
+import html
 import re
 
-#import pandas as pd
-#import mysql.connector
-#
-#from scrapWeb import extractUrlMysql, getUrlText
-
-###############################################################################
-r = requests.get("https://docs.python.org/2/library/re.html")
-html_code = r.text
-soup = BeautifulSoup(html_code, "lxml")
-
-for script in soup(["script", "style"]):
-    script.extract()
-
-sample = soup.get_text()
-sample = html.unescape(sample) #html_tags =  re.findall(r'&[a-z]+',sample)
-
-#Converting the text to utf -8 
-if type(sample) != str:
-    sample = sample.decode("UTF-8").encode('ascii','ignore')
-
-
-sample1 = re.sub(r'[^a-zA-Z0-9 ]',r' ',sample)
-sample2 = re.sub(r'[0-9+]',r' ',sample1)
-
-
-text = TextBlob(sample2)
-
-#Extracting phrases
-text0 = text.noun_phrases
-tg = [t.lower() for t in text0]
-
-freq_words = nltk.FreqDist(tg)
-
-
-print(freq_words.most_common(15)) 
-
-#
-#y = set(tg)
-#
-#for w in tg:
-#    if w in y:
-#        print("NOT FOUND : " +w)
-
 ###############################################################################
 
-#url_lst = extractUrlMysql()
-#txt_lst = getUrlText(url_lst)
-#
-#letter = []
-#for t in txt_lst:
-#    #getting rid of html tags
-#    sample = html.unescape(t) #html_tags =  re.findall(r'&[a-z]+',sample)
-#
-#    #Converting the text to utf -8 
-#    if type(sample) != str:
-#        sample = sample.decode("UTF-8").encode('ascii','ignore')
-#    
-#    text = TextBlob(sample)
-#    
-#    #Extracting phrases
-#    text0 = text.
+with open('text_lst.pkl', 'rb') as f:
+    text_lst = pickle.load(f)
 
-###############################################################################
-#from nltk.corpus import wordnet
-#
-#syns = wordnet.synsets("mysql")
-#print(syns)
+gen_docs = []
+    
+for t in text_lst:
+    
+    if type(t) != str:
+     t = t.decode("UTF-8").encode('ascii','ignore')
+     
+    t = html.unescape(t)# get rid of the html tags
+    t = re.sub(r'[^a-zA-Z0-9 ]',r' ',t)
+    t = re.sub(r'[0-9+]',r' ',t)
+    
+    del_words = ['thi', 'ymy']#list to be ommited from analysis
+    stop_words = set(stopwords.words("english"))
+    stop_words.update(del_words)
+    
+    text = TextBlob(t)
+    text = text.words.singularize()
+    text = (t.lower() for t in text)
+    text = [t.strip() for t in text if t not in stop_words and len(t) != 1]
+    
+    gen_docs.append(text)
+    
+dictionary = gensim.corpora.Dictionary(gen_docs)# Creates a dictionary of words
+dictionary.save('webscrap.dict')
+
+corpus = [dictionary.doc2bow(text) for text in gen_docs]#Bag of words for texts
+gensim.corpora.MmCorpus.serialize('webscrap.mm', corpus)
+
+tfidf = gensim.models.TfidfModel(corpus)
+index = gensim.similarities.SparseMatrixSimilarity(tfidf[corpus], num_features= len(dictionary))
+
+sims = index[tfidf[corpus[1]]]
+print(list(enumerate(sims)))

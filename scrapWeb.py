@@ -5,11 +5,12 @@ import nltk
 from nltk.corpus import stopwords
 from textblob import TextBlob
 
-import pandas as pd
 import mysql.connector
 
 import html
 import re
+
+import pickle
 ###############################################################################
 
 def extractUrlMysql():
@@ -23,7 +24,7 @@ def extractUrlMysql():
 #    url_list = cursor.fetchall()
 
     url_list = []    
-    for i in range(10):
+    for i in range(5):
         url = cursor.fetchone()
         url_list.append(url)
     
@@ -68,7 +69,7 @@ def getUrlText(url_lst):
 
 ###############################################################################
 
-def getFrequentWords(text_lst, exclude = [], quart = 0.9):
+def getFrequentWords(text_lst, quart = 0.9):
     """
     text_lst - List of strings to be processed
     exclude - List of words to be pervented
@@ -94,7 +95,6 @@ def getFrequentWords(text_lst, exclude = [], quart = 0.9):
     text = TextBlob(t)
     text = text.words.singularize()
     text = (t.lower() for t in text)
-    text = (t for t in text if t not in exclude)
     text = [t.strip() for t in text if t not in stop_words and len(t) != 1]
         
     word_freq = nltk.FreqDist(text)
@@ -105,7 +105,7 @@ def getFrequentWords(text_lst, exclude = [], quart = 0.9):
 ###############################################################################
 
 def getSentiment(txt_lst):
-    con_str = "".join(txt_lst)
+    con_str = " ".join(txt_lst)
     sent = TextBlob(con_str)
     print("The Polarity is : " + str(sent.sentiment.polarity) +" and the subjectivity is "
           + str(sent.sentiment.subjectivity))
@@ -114,6 +114,10 @@ def getSentiment(txt_lst):
 
 url_lst = extractUrlMysql()
 text_lst = getUrlText(url_lst)
-freq_words = getFrequentWords(text_lst)
-getSentiment(text_lst)
+with open('text_lst.pkl', 'wb') as f:
+    pickle.dump(text_lst, f)
+
+
+#freq_words = getFrequentWords(text_lst)
+#getSentiment(text_lst)
 
