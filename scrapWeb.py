@@ -24,7 +24,7 @@ def extractUrlMysql():
 #    url_list = cursor.fetchall()
 
     url_list = []    
-    for i in range(5):
+    for i in range(100):
         url = cursor.fetchone()
         url_list.append(url)
     
