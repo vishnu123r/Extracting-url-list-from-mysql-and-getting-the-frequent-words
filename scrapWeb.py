@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
 
 import nltk
 from nltk.corpus import stopwords
@@ -11,12 +12,18 @@ import html
 import re
 
 import pickle
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+
+
 ###############################################################################
 
 def extractUrlMysql():
     
     """Extracts the url history from the mysql database"""
     
+    print('Extracting Url History')
     conn = mysql.connector.connect(user = 'root',password='danekane',host='localhost',database = 'url_list')
     cursor = conn.cursor()
     cursor.execute("SELECT urls FROM url_names")
@@ -52,7 +59,7 @@ def getUrlText(url_lst):
         
         except:
             print("URL not reached: " + url)
-            ret_text.append(" ")
+            url_lst.remove(url)
             continue 
         
         #Format the text for extraction
@@ -98,26 +105,59 @@ def getFrequentWords(text_lst, quart = 0.9):
     text = [t.strip() for t in text if t not in stop_words and len(t) != 1]
         
     word_freq = nltk.FreqDist(text)
-    freq_words = word_freq.most_common(500)
+    ret_freq_words = word_freq.most_common(500)
 
-    return freq_words
-
-###############################################################################
-
-def getSentiment(txt_lst):
-    con_str = " ".join(txt_lst)
-    sent = TextBlob(con_str)
-    print("The Polarity is : " + str(sent.sentiment.polarity) +" and the subjectivity is "
-          + str(sent.sentiment.subjectivity))
+    return ret_freq_words
 
 ###############################################################################
 
-url_lst = extractUrlMysql()
-text_lst = getUrlText(url_lst)
-with open('text_lst.pkl', 'wb') as f:
-    pickle.dump(text_lst, f)
+def cleanText(text_lst):
+    
+    print('Cleaning text')
+    ret_text_lst = []
+    
+    for t in text_lst:
+        
+        if type(t) != str:
+         t = t.decode("UTF-8").encode('ascii','ignore')
+         
+        t = html.unescape(t)# get rid of the html tags
+        t = re.sub(r'[^a-zA-Z0-9 ]',r' ',t)
+        t = re.sub(r'[0-9+]',r' ',t)
+        
+        del_words = ['thi', 'ymy']#list to be ommited from analysis
+        stop_words = set(stopwords.words("english"))
+        stop_words.update(del_words)
+        
+        text = TextBlob(t)
+        text = text.words.singularize()
+        text = (t.lower() for t in text)
+        text = [t.strip() for t in text if t not in stop_words and len(t) != 1]
+        
+        text = " ".join(text)
+        ret_text_lst.append(text)
+        
+    return ret_text_lst
 
+###############################################################################
 
-#freq_words = getFrequentWords(text_lst)
-#getSentiment(text_lst)
+def clusterText(text_lst, url_lst, n = 5):
+    """This function will cluster the given text files"""
+    
+    print("Clustering URLs")
+    text_lst = cleanText(text_lst)
+    
+    vectorizer = TfidfVectorizer(max_df = 0.5, min_df = 2, stop_words = 'english')
+    X = vectorizer.fit_transform(text_lst)
+    
+    km = KMeans(n_clusters = n, init = 'k-means++', max_iter = 100, n_init = 1, verbose = True)
+    km.fit(X)
+
+    y = list(km.labels_)
+    clusters = list(zip(y, url_lst))
+    ret_clusters = pd.DataFrame(clusters, columns = ['Cluster No.','Url Name'])
+    
+    return ret_clusters
+
+###############################################################################
 
