@@ -12,6 +12,7 @@ import html
 import re
 
 import pickle
+import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
@@ -31,7 +32,7 @@ def extractUrlMysql():
 #    url_list = cursor.fetchall()
 
     url_list = []    
-    for i in range(100):
+    for i in range(500):
         url = cursor.fetchone()
         url_list.append(url)
     
@@ -76,7 +77,7 @@ def getUrlText(url_lst):
 
 ###############################################################################
 
-def getFrequentWords(text_lst, quart = 0.9):
+def getFrequentWords(text_lst):
     """
     text_lst - List of strings to be processed
     exclude - List of words to be pervented
@@ -145,9 +146,9 @@ def clusterText(text_lst, url_lst, n = 5):
     """This function will cluster the given text files"""
     
     print("Clustering URLs")
-    text_lst = cleanText(text_lst)
     
-    vectorizer = TfidfVectorizer(max_df = 0.5, min_df = 2, stop_words = 'english')
+    #vectorizer = TfidfVectorizer(max_df = 0.5, min_df = 2, stop_words = 'english')
+    vectorizer = TfidfVectorizer()
     X = vectorizer.fit_transform(text_lst)
     
     km = KMeans(n_clusters = n, init = 'k-means++', max_iter = 100, n_init = 1, verbose = True)
@@ -161,3 +162,12 @@ def clusterText(text_lst, url_lst, n = 5):
 
 ###############################################################################
 
+def plotIneClus(X,i):
+    ret_ine = []
+    for i in range(2,i):
+        km = KMeans(n_clusters = i, init = 'k-means++', max_iter = 100, n_init = 1, verbose = True)
+        km.fit(X)
+        ret_ine.append(km.inertia_)
+    
+    plt.scatter(range(2,i), ret_ine)
+    plt.show()

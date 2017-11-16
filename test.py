@@ -54,9 +54,13 @@ for t in text_lst:
 vectorizer = TfidfVectorizer(max_df = 0.5, min_df = 2, stop_words = 'english')
 X = vectorizer.fit_transform(gen_docs)
 
+ine = []
 
-km = KMeans(n_clusters = 5, init = 'k-means++', max_iter = 100, n_init = 1, verbose = True)
-km.fit(X)
-print(km.labels_)
+for i in range(2,20):
+    km = KMeans(n_clusters = i, init = 'k-means++', max_iter = 100, n_init = 1, verbose = True)
+    km.fit(X)
+    ine.append(km.inertia_)
+
+
 
 ################################################################################

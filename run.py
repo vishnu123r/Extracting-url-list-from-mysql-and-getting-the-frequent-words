@@ -1,5 +1,14 @@
 from scrapWeb import *
 
-#url_lst = extractUrlMysql()
+with open('text_lst.pickle', 'rb') as handle:
+    text_lst = pickle.load(handle)
+
+url_lst = extractUrlMysql()
 #text_lst = getUrlText(url_lst)
-df = clusterText(text_lst, url_lst, n=5)
+#text_lst = cleanText(text_lst)
+#df = clusterText(text_lst, url_lst, n=5)
+
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(text_lst)
+
+plotIneClus(X,100)
