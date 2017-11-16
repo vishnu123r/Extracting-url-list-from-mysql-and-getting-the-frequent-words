@@ -11,4 +11,4 @@ url_lst = extractUrlMysql()
 vectorizer = TfidfVectorizer()
 X = vectorizer.fit_transform(text_lst)
 
-plotIneClus(X,100)
+plotIneClus(X,9)

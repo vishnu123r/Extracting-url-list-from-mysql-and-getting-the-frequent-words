@@ -162,12 +162,12 @@ def clusterText(text_lst, url_lst, n = 5):
 
 ###############################################################################
 
-def plotIneClus(X,i):
+def plotIneClus(X,n):
     ret_ine = []
-    for i in range(2,i):
+    for i in range(2,n):
         km = KMeans(n_clusters = i, init = 'k-means++', max_iter = 100, n_init = 1, verbose = True)
         km.fit(X)
         ret_ine.append(km.inertia_)
     
-    plt.scatter(range(2,i), ret_ine)
+    plt.scatter(range(2,n), ret_ine)
     plt.show()
