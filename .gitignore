@@ -8,3 +8,6 @@ webscrap.dict
 webscrap.mm.index
 .0
 text_lst.pickle
+google.pkl
+youtube.pkl
+test2.py

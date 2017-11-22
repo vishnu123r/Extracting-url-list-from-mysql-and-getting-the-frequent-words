@@ -1,3 +1,4 @@
+
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -12,11 +13,13 @@ import html
 import re
 
 import pickle
-import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 
+
+import matplotlib.pyplot as plt
+import scipy.io
 
 ###############################################################################
 
@@ -96,7 +99,7 @@ def getFrequentWords(text_lst):
     t = re.sub(r'[^a-zA-Z0-9 ]',r' ',t)
     t = re.sub(r'[0-9+]',r' ',t)
     
-    del_words = ['thi', 'ymy']#list to be ommited from analysis
+    del_words = ['thi', 'ymy','www','http','com','searchsearch','view','play','nextplay','duration','ago']#list to be ommited from analysis
     stop_words = set(stopwords.words("english"))
     stop_words.update(del_words)
     
@@ -126,7 +129,7 @@ def cleanText(text_lst):
         t = re.sub(r'[^a-zA-Z0-9 ]',r' ',t)
         t = re.sub(r'[0-9+]',r' ',t)
         
-        del_words = ['thi', 'ymy']#list to be ommited from analysis
+        del_words = ['thi', 'ymy','www','http','com','searchsearch','view','play','nextplay','duration','ago']#list to be ommited from analysis
         stop_words = set(stopwords.words("english"))
         stop_words.update(del_words)
         
@@ -155,19 +158,62 @@ def clusterText(text_lst, url_lst, n = 5):
     km.fit(X)
 
     y = list(km.labels_)
-    clusters = list(zip(y, url_lst))
-    ret_clusters = pd.DataFrame(clusters, columns = ['Cluster No.','Url Name'])
+    clusters = list(zip(y, url_lst, text_lst))
+    ret_clusters = pd.DataFrame(clusters, columns = ['cluster_no','url_name','text_lst'])
     
-    return ret_clusters
+    return ret_clusters, X
 
 ###############################################################################
 
 def plotIneClus(X,n):
+    
     ret_ine = []
+    
     for i in range(2,n):
         km = KMeans(n_clusters = i, init = 'k-means++', max_iter = 100, n_init = 1, verbose = True)
         km.fit(X)
         ret_ine.append(km.inertia_)
     
     plt.scatter(range(2,n), ret_ine)
+    plt.show()
+
+###############################################################################
+    
+def plot_coo_matrix(m):
+    if not isinstance(m, coo_matrix):
+        m = coo_matrix(m)
+    fig = plt.figure()
+    fig.patch.set_facecolor('black')
+    ax = fig.add_subplot(111)
+    ax.plot(m.col, m.row, 's', color='white', ms=1)
+    ax.set_xlim(0, m.shape[1])
+    ax.set_ylim(0, m.shape[0])
+    ax.set_aspect('equal')
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+#    ax.invert_yaxis()
+#    ax.set_aspect('equal')
+#    ax.set_xticks([])
+#    ax.set_yticks([])
+    
+    print(type(ax))
+    
+    return ax
+
+###############################################################################
+    
+def plot_sparse(X):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.spy(X,precision=0.01, markersize=0.5)
+    ax.set_xlim(0, X.shape[1])
+    ax.set_ylim(0, X.shape[0])
+    ax.set_aspect('auto')
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    ax.invert_yaxis()
+    ax.set_aspect('auto')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    #plt.pause(20)
     plt.show()
