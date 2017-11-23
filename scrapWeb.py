@@ -25,21 +25,22 @@ import scipy.io
 
 def extractUrlMysql():
     
-    """Extracts the url history from the mysql database"""
+    """Extracts the url history from the mysql database and returns a set of url names"""
     
     print('Extracting Url History')
     conn = mysql.connector.connect(user = 'root',password='danekane',host='localhost',database = 'url_list')
     cursor = conn.cursor()
     cursor.execute("SELECT urls FROM url_names")
     
-#    url_list = cursor.fetchall()
+    url_list = cursor.fetchall()
 
-    url_list = []    
-    for i in range(500):
-        url = cursor.fetchone()
-        url_list.append(url)
+#    url_list = []    
+#    for i in range(500):
+#        url = cursor.fetchone()
+#        url_list.append(url)
     
     ret_lst = [i[0] for i in url_list]
+    ret_lst = list(set(ret_lst))
     
     return ret_lst
 
@@ -55,6 +56,7 @@ def getUrlText(url_lst):
     #Initialising array for return
     ret_text = []
     
+    rem_url = []
     for url in url_lst:
         #Get text from Url
         try: 
@@ -63,7 +65,8 @@ def getUrlText(url_lst):
         
         except:
             print("URL not reached: " + url)
-            url_lst.remove(url)
+            rem_url.append(url)
+            ret_text.append("")
             continue 
         
         #Format the text for extraction
@@ -74,9 +77,14 @@ def getUrlText(url_lst):
         
         ret_text.append(soup.get_text())
     
+    ret_text = list(filter(None, ret_text))
+    
+    for url in rem_url:
+        url_lst.remove(url)
+    
     assert len(url_lst) == len(ret_text)
     
-    return ret_text
+    return ret_text, url_lst
 
 ###############################################################################
 
@@ -215,5 +223,5 @@ def plot_sparse(X):
     ax.set_aspect('auto')
     ax.set_xticks([])
     ax.set_yticks([])
-    #plt.pause(20)
     plt.show()
+    
