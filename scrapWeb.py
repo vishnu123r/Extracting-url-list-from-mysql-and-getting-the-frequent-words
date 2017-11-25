@@ -32,15 +32,15 @@ def extractUrlMysql():
     cursor = conn.cursor()
     cursor.execute("SELECT urls FROM url_names")
     
-    url_list = cursor.fetchall()
+#    url_list = cursor.fetchall()
 
-#    url_list = []    
-#    for i in range(500):
-#        url = cursor.fetchone()
-#        url_list.append(url)
+    url_list = []    
+    for i in range(500):
+        url = cursor.fetchone()
+        url_list.append(url)
     
     ret_lst = [i[0] for i in url_list]
-    ret_lst = list(set(ret_lst))
+    #ret_lst = list(set(ret_lst))
     
     return ret_lst
 
@@ -162,7 +162,7 @@ def clusterText(text_lst, url_lst, n = 5):
     vectorizer = TfidfVectorizer()
     X = vectorizer.fit_transform(text_lst)
     
-    km = KMeans(n_clusters = n, init = 'k-means++', max_iter = 100, n_init = 1, verbose = True)
+    km = KMeans(n_clusters = n, init = 'k-means++', max_iter = 100, n_init = 1, verbose = True, random_state = 42)
     km.fit(X)
 
     y = list(km.labels_)
@@ -178,7 +178,7 @@ def plotIneClus(X,n):
     ret_ine = []
     
     for i in range(2,n):
-        km = KMeans(n_clusters = i, init = 'k-means++', max_iter = 100, n_init = 1, verbose = True)
+        km = KMeans(n_clusters = i, init = 'k-means++', max_iter = 100, n_init = 1, verbose = True, random_state = 42)
         km.fit(X)
         ret_ine.append(km.inertia_)
     
@@ -225,3 +225,30 @@ def plot_sparse(X):
     ax.set_yticks([])
     plt.show()
     
+###############################################################################
+
+def clusterFreWords(df, n):
+    
+    ret_lst = []
+    
+    for i in range(n):
+        df = df[df['cluster_no'] == i]
+        tex_lst = list(df['text_lst'].values)
+        fre = getFrequentWords(tex_lst)
+        ret_lst.append(fre[0:5])
+        
+    return ret_lst
+
+###############################################################################
+    
+def getClusteredText(df, n):
+    ret_dict = {}
+    
+    for i in range(n):
+        df1 = df[df['cluster_no'] == i]
+        tex_lst = list(df1['text_lst'].values)
+        ret_dict[i] = tex_lst
+    
+    return ret_dict
+
+###############################################################################
