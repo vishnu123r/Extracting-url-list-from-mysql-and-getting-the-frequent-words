@@ -21,6 +21,10 @@ from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 import scipy.io
 
+from sklearn.decomposition import LatentDirichletAllocation
+from sklearn.feature_extraction.text import CountVectorizer
+import numpy as np
+
 ###############################################################################
 
 def extractUrlMysql():
@@ -31,7 +35,7 @@ def extractUrlMysql():
     conn = mysql.connector.connect(user = 'root',password='danekane',host='localhost',database = 'url_list')
     cursor = conn.cursor()
     cursor.execute("SELECT urls FROM url_names")
-    
+#    
 #    url_list = cursor.fetchall()
 
     url_list = []    
@@ -40,7 +44,7 @@ def extractUrlMysql():
         url_list.append(url)
     
     ret_lst = [i[0] for i in url_list]
-    #ret_lst = list(set(ret_lst))
+    ret_lst = list(set(ret_lst))
     
     return ret_lst
 
@@ -252,3 +256,29 @@ def getClusteredText(df, n):
     return ret_dict
 
 ###############################################################################
+    
+def labelLda(dic, n):
+    """
+    This function will return a dictionary with top 5 words for each cluster
+    dic - Clustered dictionary
+    n - Number of topics
+    
+    """
+    
+    vectorizer = CountVectorizer()
+
+    fin_dic = {}
+    for k,v in dic.items():
+        X = vectorizer.fit_transform(v)
+        vocab = vectorizer.get_feature_names()
+        model = LatentDirichletAllocation(n_components=n, random_state=100)
+        id_topic = model.fit_transform(X)
+        
+        
+        topic_words = {}
+        for topic, comp in enumerate(model.components_):    
+            word_idx = np.argsort(comp)[::-1][:5]
+            topic_words[topic] = [vocab[i] for i in word_idx]
+            fin_dic[k] =  topic_words
+    
+    return fin_dic
