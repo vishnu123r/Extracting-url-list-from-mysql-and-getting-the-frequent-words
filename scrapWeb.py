@@ -25,6 +25,8 @@ from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.feature_extraction.text import CountVectorizer
 import numpy as np
 
+import gensim
+
 ###############################################################################
 
 def extractUrlMysql():
@@ -282,3 +284,22 @@ def labelLda(dic, n):
             fin_dic[k] =  topic_words
     
     return fin_dic
+
+###############################################################################
+    
+def gensimLda(dic, n):
+    
+    fin_dic = {}
+    
+    for k,v in dic.items():
+        texts = [[token for token in text.split()] for text in v]
+        dictionary = gensim.corpora.Dictionary(texts)# Creates a dictionary of words
+        #texts = [[t.split(" ")] for t in v]
+        corpus = [dictionary.doc2bow(text) for text in texts]#Bag of words for texts
+        
+        ldamodel = gensim.models.ldamodel.LdaModel(corpus, num_topics=n, id2word = dictionary, passes=20)
+        fin_dic[k] = ldamodel.print_topics(num_topics=n, num_words=3)
+        
+    return fin_dic
+
+        
